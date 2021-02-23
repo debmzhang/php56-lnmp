@@ -1,0 +1,59 @@
+version: "3"
+
+services:
+    mysql:
+        image: mysql:5.7
+        container_name: php56lnmp-mysql
+        restart: always
+        ports:
+            - "3306"
+        volumes:
+            - ./data/mysql:/var/lib/mysql
+            - ./etc/my.cnf:/etc/my.cnf
+        environment:
+            MYSQL_ROOT_PASSWORD: "${mysql_root_password}"
+            TZ: Asia/Shanghai
+        networks:
+            - net-web
+    redis:
+        image: redis:6.0.9
+        container_name: php56lnmp-redis
+        restart: always
+        ports:
+            - "6379"
+        volumes:
+            - ./data/redis:/data
+            - ./etc/redis.conf:/etc/redis.conf
+        command:
+            redis-server /etc/redis.conf --requirepass ${redis_requirepass}
+        networks:
+            - net-web
+    php:
+        image: debmzhang/php5.6.40:lnmp-nerd-v1
+        container_name: php56lnmp-php
+        ports:
+            - "9000"
+        volumes:
+            - ./logs/php:/usr/local/php/var/log
+            - ./etc/php-fpm.conf:/usr/local/php/etc/php-fpm.conf
+            - ./www:/www
+        networks:
+            - net-web
+    nginx:
+        image: debmzhang/nginx:lnmp-nerd-v1
+        container_name: php56lnmp-nginx
+        depends_on:
+            - php
+        ports:
+            - "80"
+            - "443"
+        volumes:
+            - ./www:/www
+            - ./conf.d:/etc/nginx/conf.d
+            - ./logs/nginx:/var/log/nginx
+            - ./tmp:/tmp
+        networks:
+            - net-web
+
+networks:
+    net-web:
